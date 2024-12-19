@@ -1,30 +1,56 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { WebsocketService } from './services/websocket.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+    selector: 'app-root',
+    standalone: true,
+    imports: [CommonModule, FormsModule, HttpClientModule],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit{
-  title = 'frontend';
+export class AppComponent implements OnInit {
 
-  constructor(private websocketService: WebsocketService) {
-        console.log('App Component constructor called');
-  }
+    title = 'yourcaryourway';
+    username: string = '';
+    message: string = '';
+    messages: any[] = [];
+    isConnected = false;
+    connectingMessage = 'Connecting...';
+
+    constructor(private websocketService: WebsocketService) { }
 
     ngOnInit() {
-        console.log('App Component initialized');
+        this.websocketService.fetchOldMessages().subscribe(oldMessages => {
+            this.messages = oldMessages;
+        });
+
+        this.websocketService.messages$.subscribe(message => {
+            if (message) {
+                this.messages.push(message);
+            }
+        });
+
+        this.websocketService.connection$.subscribe(connected => {
+            this.isConnected = connected;
+            if (connected) {
+                this.connectingMessage = ''; 
+                console.log('WebSocket connection established');
+              }
+        });
     }
 
     connect() {
-        console.log('Connect button clicked');
+        this.websocketService.connect(this.username);
     }
 
     send() {
-        console.log('Send button clicked');
+        if (this.message) {
+            this.websocketService.send(this.username, this.message);
+            this.message = '';
+        }
     }
 }

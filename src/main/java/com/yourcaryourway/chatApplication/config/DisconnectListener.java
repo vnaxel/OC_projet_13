@@ -1,10 +1,10 @@
 package com.yourcaryourway.chatApplication.config;
 
 import com.yourcaryourway.chatApplication.model.ChatMessage;
-import com.yourcaryourway.chatApplication.controller.ChatController;
 import com.yourcaryourway.chatApplication.model.ChatMessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.context.event.EventListener;
@@ -13,9 +13,11 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WsEventListener {
+public class DisconnectListener {
 
-    private final ChatController ChatController;
+    private final com.yourcaryourway.chatApplication.controller.ChatController ChatController;
+
+    private final SimpMessageSendingOperations messageSendingOperations;
 
     @EventListener
     public void handleWsDisconnectListener(SessionDisconnectEvent event) {
@@ -27,7 +29,7 @@ public class WsEventListener {
                     .type(ChatMessageType.LEAVE)
                     .sender(username)
                     .build();
-            ChatController.send(message);
+            messageSendingOperations.convertAndSend("/topic/public", message);
         }
     }
 }
